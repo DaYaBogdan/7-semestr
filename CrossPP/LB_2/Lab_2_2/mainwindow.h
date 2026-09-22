@@ -29,6 +29,7 @@ private slots:
     void setTitle();
     void copyText();
     void counter();
+    void disableEditText();
 };
 
 #endif // MAINWINDOW_H

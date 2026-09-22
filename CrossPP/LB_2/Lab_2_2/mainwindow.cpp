@@ -7,8 +7,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    connect(ui->label_2, SIGNAL(disable()), this,
-            SLOT(setTitle()));
+    connect(ui->label_2, SIGNAL(disable()),
+            this, SLOT(disableEditText()));
     connect(ui->btn_changeTitle, SIGNAL(clicked()), this,
             SLOT(setTitle()));
     connect(ui->editText, SIGNAL(textChanged()), this,
@@ -20,6 +20,11 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::disableEditText()
+{
+    ui->editText->setDisabled(true);
 }
 
 void MainWindow::setTitle()
