@@ -53,17 +53,6 @@
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="nameLabel">
-          <property name="text">
-           <string>Имя</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
-        <item>
          <spacer name="verticalSpacer_7">
           <property name="orientation">
            <enum>Qt::Orientation::Vertical</enum>
@@ -77,14 +66,31 @@
          </spacer>
         </item>
         <item>
-         <widget class="QTextEdit" name="emailEdit"/>
-        </item>
-        <item>
-         <widget class="QLabel" name="emailErrLabel">
+         <widget class="QLabel" name="nameLabel">
           <property name="text">
-           <string/>
+           <string>Имя</string>
           </property>
          </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_9">
+          <property name="orientation">
+           <enum>Qt::Orientation::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QLineEdit" name="emailEdit"/>
         </item>
         <item>
          <spacer name="verticalSpacer_3">
@@ -100,14 +106,7 @@
          </spacer>
         </item>
         <item>
-         <widget class="QTextEdit" name="nameEdit"/>
-        </item>
-        <item>
-         <widget class="QLabel" name="nameErrLabel">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
+         <widget class="QLineEdit" name="nameEdit"/>
         </item>
         <item>
          <spacer name="verticalSpacer_6">
@@ -125,19 +124,6 @@
        </layout>
       </item>
       <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
          <widget class="QLabel" name="titleLabel">
@@ -147,16 +133,25 @@
          </widget>
         </item>
         <item>
+         <spacer name="verticalSpacer_10">
+          <property name="orientation">
+           <enum>Qt::Orientation::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
          <widget class="QLabel" name="messageLabel">
           <property name="text">
            <string>Текст сообщения</string>
           </property>
          </widget>
         </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QVBoxLayout" name="verticalLayout_5">
         <item>
          <spacer name="verticalSpacer_8">
           <property name="orientation">
@@ -170,15 +165,12 @@
           </property>
          </spacer>
         </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
         <item>
-         <widget class="QTextEdit" name="titleEdit"/>
-        </item>
-        <item>
-         <widget class="QLabel" name="titleErrLabel">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
+         <widget class="QLineEdit" name="titleEdit"/>
         </item>
         <item>
          <spacer name="verticalSpacer_4">
@@ -188,33 +180,13 @@
           <property name="sizeHint" stdset="0">
            <size>
             <width>20</width>
-            <height>40</height>
+            <height>150</height>
            </size>
           </property>
          </spacer>
         </item>
         <item>
          <widget class="QTextEdit" name="messageEdit"/>
-        </item>
-        <item>
-         <widget class="QLabel" name="messageErrLabel">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="verticalSpacer_5">
-          <property name="orientation">
-           <enum>Qt::Orientation::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
         </item>
        </layout>
       </item>
@@ -234,7 +206,7 @@
      </layout>
     </item>
     <item>
-     <spacer name="verticalSpacer">
+     <spacer name="verticalSpacer_5">
       <property name="orientation">
        <enum>Qt::Orientation::Vertical</enum>
       </property>
@@ -253,6 +225,19 @@
       </property>
      </widget>
     </item>
+    <item>
+     <spacer name="verticalSpacer">
+      <property name="orientation">
+       <enum>Qt::Orientation::Vertical</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>40</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -261,7 +246,7 @@
      <x>0</x>
      <y>0</y>
      <width>1249</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
   </widget>

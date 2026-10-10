@@ -16,24 +16,9 @@ public:
     ~MainWindow();
 
 private slots:
-    // слоты для "валидации на лету"
-    void validateEmail();
-    void validateName();
-    void validateTitle();
-    void validateMessage();
-
-    // слот кнопки
-    void on_sendMessage_clicked();
+    void sendMessage();
 
 private:
-    // функции-проверки: true = ok, false = ошибка
-    // (setHint = true — обновлять ли подсказку/метку)
-    bool checkEmail(bool setHint = true);
-    bool checkName(bool setHint = true);
-    bool checkTitle(bool setHint = true);
-    bool checkMessage(bool setHint = true);
-
-    // сохранение в файл
     bool saveToFile(const QString &path);
 
     Ui::MainWindow *ui;
