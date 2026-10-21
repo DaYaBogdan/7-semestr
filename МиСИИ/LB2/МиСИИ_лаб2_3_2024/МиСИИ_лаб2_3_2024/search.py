@@ -87,40 +87,157 @@ def depthFirstSearch(problem):
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
-    root = depthSearch(problem, problem.getStartState(), problem.getStartState())
-    path = []
-    
-    for i in range(len(root.list)):
-        path.append(root.pop())
-    
-    print(path)
-    
-    return path
 
-def depthSearch(problem, cords_st: tuple, cords_pr: tuple):
+    start = problem.getStartState()
 
-    if problem.isGoalState(cords_st):
-        return util.Queue()
+    if problem.isGoalState(start): return []
     
-    for cords, direction, cost in problem.getSuccessors(cords_st):
-        print(problem.getSuccessors(cords_st))
-        if cords == problem.getStartState() or cords == cords_pr:
-            continue
-        stack = depthSearch(problem, cords, cords_st)
-        if stack:
-            stack.push(direction)
-            return stack
+    CLOSED = [start]
+
+    for node in problem.getSuccessors(start):
+        if node[0] in CLOSED: continue
+
+        sub_path = depthSearch(problem, node, CLOSED)
+
+        if sub_path is not None:
+            return [node[1]] + sub_path
+
+    return []
 
 
+def depthSearch(problem, node, CLOSED: list) -> list:
+
+    COORDS, WAY, _WEIGHT = node
+
+    if problem.isGoalState(COORDS): return []
+
+    CLOSED.append(COORDS)
+
+    for child in problem.getSuccessors(COORDS):
+        if child[0] in CLOSED: continue
+
+        sub_path = depthSearch(problem, child, CLOSED)
+
+        if sub_path is not None:
+            return [child[1]] + sub_path
+
+    return None
+
+def hlam():
+    # def depthSearch(problem, node, CLOSED: list) -> list:
+
+    #     updatePath = path_updater()
+    #     route = []
+
+    #     # Раскрываем параметры ноды
+    #     COORDS = node[0]
+    #     WAY = node[1]
+    #     WEIGHT = node[2]
+
+    #     # Мы на месте?
+    #     if problem.isGoalState(COORDS): return [WAY]
+
+    #     # Раз мы не на месте, продолжим путь, зафиксируем место как посещённое
+    #     CLOSED.append(COORDS)
+
+    #     # Обход доступных мест | Если место уже посещено - пропуск
+    #     for child in problem.getSuccessors(COORDS):
+    #         if child[0] in CLOSED: continue
+
+    #         # Поиск лучшего пути
+    #         route = updatePath(depthSearch(problem, child, CLOSED))
+
+    #     # Добавление в лучший путь нашей ноды | Если конечно такой существует
+    #     if route: route.append(WAY)
+
+    #     return route
+
+    # def path_updater():
+    #     path = []
+
+    #     def updatePath(pathT: list) -> list:
+    #         nonlocal path
+
+    #         IS_VOID_LIST = not pathT
+    #         if IS_VOID_LIST: return list(path)
+
+    #         DONT_HAVE_ANY_PATH = not len(path)
+    #         NEW_PATH_WEIGHTS_LESS = len(pathT) < len(path) 
+
+    #         if DONT_HAVE_ANY_PATH or NEW_PATH_WEIGHTS_LESS: path = list(pathT)
+
+    #         return list(path)
+
+    #     return updatePath
+    return 
+
+from util import Queue
 def breadthFirstSearch(problem):
-    """Находит самые поверхностные узлы в дереве поиска """
-    "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-    util.raiseNotDefined()
+    start = problem.getStartState()
+    if problem.isGoalState(start):
+        return []
+
+    OPEN = Queue()
+    CLOSED = {start}
+    parent = {}
+
+    for child, action, _ in problem.getSuccessors(start):
+        if child in CLOSED:
+            continue
+        CLOSED.add(child)
+        parent[child] = (start, action)
+        OPEN.push((child, action))
+
+    while not OPEN.isEmpty():
+        node, action = OPEN.pop()
+
+        if problem.isGoalState(node):
+            return Path(problem, node, parent)
+
+        for child, child_action, _ in problem.getSuccessors(node):
+            if child in CLOSED:
+                continue
+            CLOSED.add(child)
+            parent[child] = (node, child_action)
+            OPEN.push((child, child_action))
+
+    return []
+
+def Path(problem, node, parent):
+    how_to_get_home = []
+    start = problem.getStartState()
+
+    while node != start:
+        prev, action = parent[node]
+        how_to_get_home.append(action)
+        node = prev
+
+    return how_to_get_home[::-1]
+
+import heapq
 
 def uniformCostSearch(problem):
-    """Находит узел минимальной стоимости """
-    "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-    util.raiseNotDefined()
+    start = problem.getStartState()
+    OPEN = util.Stack((0, start, []))          
+    best_cost = {start: 0}               
+    CLOSED = []
+
+    while OPEN:
+        cost, state, path = heapq.heappop(OPEN)
+
+        if problem.isGoalState(state): return path
+
+        if state in CLOSED: continue
+        
+        CLOSED.add(state)
+
+        for succ, action, step_cost in problem.getSuccessors(state):
+            new_cost = cost + step_cost
+            if succ not in CLOSED and new_cost < best_cost.get(succ, float('inf')):
+                best_cost[succ] = new_cost
+                OPEN.push((new_cost, succ, path + [action]))
+
+    return None
 
 def nullHeuristic(state, problem=None):
     """
