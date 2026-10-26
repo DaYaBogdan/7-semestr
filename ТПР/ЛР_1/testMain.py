@@ -35,8 +35,32 @@ test4 = Max_R_X([
     [0, 0, 0, 0, 0],
 ])
 
-print(test1.findMax())
-print(test2.findMax())
+test_work = Max_R_X([
+    [0, 1, 0, 1, 0, 0, 0],
+    [0, 0, 1, 0, 1, 0, 0],
+    [0, 0, 0, 0, 0, 1, 0],
+    [0, 1, 0, 0, 1, 0, 1],
+    [0, 0, 0, 0, 0, 0, 1],
+    [0, 0, 0, 0, 1, 0, 1],
+    [0, 0, 0, 0, 0, 0, 0]
+])
+
+test_work_2 = Max_R_X([
+    [0, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 0, 0, 0, 1, 0],
+    [0, 1, 0, 0, 1, 1, 0],
+    [0, 0, 0, 0, 0, 0, 1],
+    [0, 0, 0, 0, 0, 0, 1],
+    [0, 0, 0, 0, 0, 0, 0],
+])
+
+# print(test1.findMax())
+# print(test2.findMax())
+# print()
+# test3.print_result()
+# test4.print_result()
+
+print(test_work_2.findMax())
 print()
-test3.print_result()
-test4.print_result()
+test_work_2.print_result()

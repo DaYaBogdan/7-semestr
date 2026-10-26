@@ -75,15 +75,15 @@ class Max_R_X:
     #--------------------------------------------
     
     def findMax(self) -> list:
-        max = [1 for i in range(len(self.matrix))]
         matrix = self.matrix
+        max = [1 for i in range(len(self.matrix))]
         
         for i in range(len(matrix)):
             for j in range(len(matrix[i])):
-                if matrix[i][j]:
-                    if not matrix[j][i]: 
+                if matrix[i][j] == 1:
+                    if matrix[j][i] == 0: 
                         max[j] = 0
-                    if matrix[j][i] and max[i]:
+                    if matrix[j][i] == 1 and max[i] == 0:
                         max[j] = 0
 
         return max
