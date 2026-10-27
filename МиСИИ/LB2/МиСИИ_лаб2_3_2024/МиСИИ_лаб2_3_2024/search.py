@@ -79,13 +79,6 @@ def depthFirstSearch(problem):
 
     Ваш алгоритм поиска должен возвращать список действий, которые 
     ведут к цели. Убедитесь, что реализуете алгоритм поиска на графе
-
-    Прежде чем кодировать,полезно выполнить функцию  с этими простыми
-    командами,чтобы понять смысл задачи (problem), передаваемой на вход:
-    
-    print("Start:", problem.getStartState())
-    print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
-    print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
 
     start = problem.getStartState()
@@ -182,23 +175,24 @@ def breadthFirstSearch(problem):
     parent = {}
 
     for child, action, _ in problem.getSuccessors(start):
-        if child in CLOSED:
-            continue
+        if child in CLOSED: continue
+        
         CLOSED.add(child)
         parent[child] = (start, action)
+        
         OPEN.push((child, action))
 
     while not OPEN.isEmpty():
         node, action = OPEN.pop()
 
-        if problem.isGoalState(node):
-            return Path(problem, node, parent)
+        if problem.isGoalState(node): return Path(problem, node, parent)
 
         for child, child_action, _ in problem.getSuccessors(node):
-            if child in CLOSED:
-                continue
+            if child in CLOSED: continue
+            
             CLOSED.add(child)
             parent[child] = (node, child_action)
+            
             OPEN.push((child, child_action))
 
     return []
@@ -214,28 +208,29 @@ def Path(problem, node, parent):
 
     return how_to_get_home[::-1]
 
-import heapq
-
 def uniformCostSearch(problem):
     start = problem.getStartState()
-    OPEN = util.Stack((0, start, []))          
-    best_cost = {start: 0}               
-    CLOSED = []
+    OPEN = util.PriorityQueue()
+    best_cost = {start: 0}
+    CLOSED = set()
 
-    while OPEN:
-        cost, state, path = heapq.heappop(OPEN)
+    OPEN.push((start, [], 0), 0) 
+
+    while not OPEN.isEmpty():
+        state, path, cost = OPEN.pop()
+
+        if cost > best_cost.get(state, float('inf')): continue
 
         if problem.isGoalState(state): return path
 
         if state in CLOSED: continue
-        
         CLOSED.add(state)
 
         for succ, action, step_cost in problem.getSuccessors(state):
             new_cost = cost + step_cost
             if succ not in CLOSED and new_cost < best_cost.get(succ, float('inf')):
                 best_cost[succ] = new_cost
-                OPEN.push((new_cost, succ, path + [action]))
+                OPEN.push((succ, path + [action], new_cost), new_cost)
 
     return None
 
