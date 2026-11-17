@@ -108,12 +108,32 @@ def nullHeuristic(state, problem=None):
     return 0
 
 def aStarSearch(problem, heuristic=nullHeuristic):
-    """
-    Находит узел с наименьшей комбинированной стоимостью, включающей эвристику
-    """
-    "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-    util.raiseNotDefined()
+    start = problem.getStartState()
+    OPEN = util.PriorityQueue()
+    OPEN.push((start, [], 0), heuristic(start, problem))
+    best_g = {start: 0}
+    CLOSED = set()
 
+    while not OPEN.isEmpty():
+        state, path, g = OPEN.pop()
+
+        if g > best_g.get(state, float('inf')): continue
+
+        if problem.isGoalState(state): return path
+
+        if state in CLOSED: continue
+        
+        CLOSED.add(state)
+
+        for succ, action, step_cost in problem.getSuccessors(state):
+            new_g = g + step_cost
+            if succ in CLOSED: continue
+            if new_g < best_g.get(succ, float('inf')):
+                best_g[succ] = new_g
+                new_f = new_g + heuristic(succ, problem)
+                OPEN.update((succ, path + [action], new_g), new_f)
+
+    return None
 
 #Аббривиатуры
 bfs = breadthFirstSearch
