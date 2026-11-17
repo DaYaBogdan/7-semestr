@@ -287,22 +287,17 @@ class CornersProblem(search.SearchProblem):
         self._expanded = 0 # НЕ МЕНЯЙТЕ; Количество раскрытых поисковых узлов
         # Пожалуйста, добавьте сюда любой код, который вы хотели бы использовать
         # при инициализации задачи
-        "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
+        visited = frozenset()
+        if self.startingPosition in self.corners:
+            visited = frozenset({self.startingPosition})
+        self.startState = (self.startingPosition, visited)
 
     def getStartState(self):
-        """
-        Возвращает начальное состояние (в вашем пространстве состояний, а 
-        не в полном пространстве состояний игры Pacman)
-        """
-        "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-        util.raiseNotDefined()
+        return self.startState
 
     def isGoalState(self, state):
-        """
-        Проверяет, является ли это состояние поиска целевым состоянием задачи.
-        """
-        "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-        util.raiseNotDefined()
+        position, visited = state
+        return len(visited) == 4
 
     def getSuccessors(self, state):
         """
@@ -316,6 +311,9 @@ class CornersProblem(search.SearchProblem):
         """
 
         successors = []
+        position, visited = state
+        x, y = position
+        
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Добавьте состояние-приемник в список приемников, если действие является 
             # допустимым
@@ -326,7 +324,17 @@ class CornersProblem(search.SearchProblem):
             #   nextx, nexty = int(x + dx), int(y + dy)
             #   hitsWall = self.walls[nextx][nexty]
 
-            "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            
+            if self.walls[nextx][nexty]: continue
+            
+            next_position = (nextx, nexty)
+            next_visited = visited
+            
+            if next_position in self.corners: next_visited = visited | {next_position}
+            
+            successors.append(((next_position, next_visited), action, 1))
 
         self._expanded += 1 # НЕ МЕНЯЙТЕ!
         return successors
@@ -344,7 +352,6 @@ class CornersProblem(search.SearchProblem):
             if self.walls[x][y]: return 999999
         return len(actions)
 
-
 def cornersHeuristic(state, problem):
     """
     Эвристика для задачи поиска углов, которую необходимо определить.
@@ -361,9 +368,14 @@ def cornersHeuristic(state, problem):
     """
     corners = problem.corners # Координаты углов
     walls = problem.walls # Стены лабиринта в виде объекта Grid (game.py)
-    "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-    return 0 # Default to trivial solution
-
+    
+    position, visited = state
+    
+    unvisited = [c for c in corners if c not in visited]
+    if not unvisited: return 0
+    
+    return max(abs(position[0] - c[0]) + abs(position[1] - c[1]) for c in unvisited)
+    
 class AStarCornersAgent(SearchAgent):
     "Агент SearchAgent  для FoodSearchProblem, использующий A*-поиск и  foodHeuristic"
     def __init__(self):
@@ -456,8 +468,10 @@ def foodHeuristic(state, problem):
     issue.heuristicInfo ['wallCount']
     """
     position, foodGrid = state
-    "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-    return 0
+    foodList = foodGrid.asList()
+    if not foodList:
+        return 0
+    return max(abs(position[0]-f[0]) + abs(position[1]-f[1]) for f in foodList)
 
 class ClosestDotSearchAgent(SearchAgent):
     " Поиск еды с помощью последовательных поисков"
@@ -487,8 +501,7 @@ class ClosestDotSearchAgent(SearchAgent):
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
    
-        "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-        util.raiseNotDefined()
+        return search.bfs(problem)
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -521,10 +534,8 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         """
         Состояние (state) - это позиция Pacman. Заполните кодом проверки цели 
         """
-        x,y = state
-
-        "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-        util.raiseNotDefined()
+        x, y = state
+        return self.food[x][y]
 
 def mazeDistance(point1, point2, gameState):
     """
