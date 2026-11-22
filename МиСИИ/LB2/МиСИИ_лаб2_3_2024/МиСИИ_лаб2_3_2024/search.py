@@ -219,8 +219,6 @@ def uniformCostSearch(problem):
     while not OPEN.isEmpty():
         state, path, cost = OPEN.pop()
 
-        if cost > best_cost.get(state, float('inf')): continue
-
         if problem.isGoalState(state): return path
 
         if state in CLOSED: continue
@@ -228,9 +226,8 @@ def uniformCostSearch(problem):
 
         for succ, action, step_cost in problem.getSuccessors(state):
             new_cost = cost + step_cost
-            if succ not in CLOSED and new_cost < best_cost.get(succ, float('inf')):
-                best_cost[succ] = new_cost
-                OPEN.push((succ, path + [action], new_cost), new_cost)
+            best_cost[succ] = new_cost
+            OPEN.push((succ, path + [action], new_cost), new_cost)
 
     return None
 

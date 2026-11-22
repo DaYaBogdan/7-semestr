@@ -1,58 +1,64 @@
-# before_lr6.py
-# Плохой код: создание объектов и выбор алгоритма через if/elif,
-# ручное оповещение слушателей с проверкой типа
+# ---- до рефакторинга ----
 
-class PdfReport:
-    pass
+class PayPalAPI:
+    def send_payment(self, amount_usd):
+        print(f"PayPal: списано {amount_usd} USD")
 
-class HtmlReport:
-    pass
+class StripeAPI:
+    def charge(self, amount, currency="USD"):
+        print(f"Stripe: списано {amount} {currency}")
 
-class EmailNotifier:
-    def notify_ready(self, report):
-        print(f"Email: report {type(report).__name__} ready")
-
-class LogNotifier:
-    def notify_ready(self, report):
-        print(f"Log: report {type(report).__name__} ready")
+class CryptoAPI:
+    def make_tx(self, amount):
+        print(f"Crypto: транзакция на {amount}")
 
 
-class ReportService:
+class Cinema:
     def __init__(self):
-        self._listeners = []
+        self.paypal = PayPalAPI()
+        self.stripe = StripeAPI()
+        self.crypto = CryptoAPI()
 
-    def create_report(self, type_: str):
-        if type_ == "PDF":
-            return PdfReport()
-        elif type_ == "HTML":
-            return HtmlReport()
-        else:
-            raise ValueError("Unknown report type")
-
-    def export(self, report, format_: str):
-        if format_ == "PDF":
-            print("Export to PDF")
-        elif format_ == "CSV":
-            print("Export to CSV")
-        else:
-            raise ValueError("Unknown format")
-
-    def add_listener(self, listener):
-        self._listeners.append(listener)
-
-    def generate(self):
-        report = self.create_report("PDF")
-        # ручное оповещение с проверкой типа — «запах» кода
-        for l in self._listeners:
-            if isinstance(l, EmailNotifier):
-                l.notify_ready(report)
-            elif isinstance(l, LogNotifier):
-                l.notify_ready(report)
+    def buy_ticket(self, amount, method):
+        if method == "paypal":
+            self.paypal.send_payment(amount)
+        elif method == "stripe":
+            self.stripe.charge(amount)
+        elif method == "crypto":
+            self.crypto.make_tx(amount)
 
 
-if __name__ == "__main__":
-    svc = ReportService()
-    svc.add_listener(EmailNotifier())
-    svc.add_listener(LogNotifier())
-    svc.generate()
-    svc.export(PdfReport(), "CSV")
+class EmailSender:
+    def send(self, text):
+        print(f"EMAIL: {text}")
+
+
+class Notifier:
+    # жёстко зашит только email
+    def __init__(self):
+        self.email = EmailSender()
+    def notify(self, text):
+        self.email.send(text)
+
+
+class MediaPlayer:
+    # «раздутый» интерфейс: видео + аудио + субтитры
+    def play_video(self, f): print(f"video {f}")
+    def play_audio(self, f): print(f"audio {f}")
+    def show_subtitles(self, f): print(f"subs {f}")
+
+
+class SeatService:
+    def reserve(self, seat): print(f"reserve {seat}")
+class PaymentService:
+    def pay(self, amount): print(f"pay {amount}")
+class TicketPrinter:
+    def print_ticket(self, seat): print(f"ticket {seat}")
+
+
+class OrderClient:
+    # клиент работает со всеми классами подсистемы напрямую
+    def order(self, seat, amount):
+        SeatService().reserve(seat)
+        PaymentService().pay(amount)
+        TicketPrinter().print_ticket(seat)

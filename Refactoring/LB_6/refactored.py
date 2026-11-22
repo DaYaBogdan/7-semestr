@@ -1,143 +1,257 @@
-# ======================================================================
-# ЗАМЕНА УСЛОВНОГО ОПЕРАТОРА ПОЛИМОРФИЗМОМ (Replace Conditional with
-# Polymorphism): вместо if/elif по customer.type — иерархия классов.
-# ======================================================================
-class CustomerType:
-    def apply_discount(self, amount):
-        return amount
+from __future__ import annotations
+
+import copy
+import threading
+from abc import ABC, abstractmethod
 
 
-class RegularCustomer(CustomerType):
-    def apply_discount(self, amount):
-        return amount
+# =====================================================================
+# 1. BUILDER — пошаговое создание Ticket (вместо телескопического
+#    конструктора с 8 параметрами)
+# =====================================================================
+
+class Ticket:
+    def __init__(self, b: "TicketBuilder") -> None:
+        self.film = b.film
+        self.seat = b.seat
+        self.price = b.price
+        self.extras = set(b.extras)
+        self.discount = b.discount
+        self.comment = b.comment
+
+    def __str__(self) -> str:
+        return (f"Ticket({self.film}, seat={self.seat}, "
+                f"price={self.price}, extras={sorted(self.extras)})")
+
+    def clone(self) -> "Ticket":
+        """Прототип: глубокая копия билета."""
+        return copy.deepcopy(self)
 
 
-class VipCustomer(CustomerType):
-    def apply_discount(self, amount):
-        return amount * 0.95
+class TicketBuilder:
+    def __init__(self) -> None:
+        self.film: str | None = None
+        self.seat: str | None = None
+        self.price: float = 0.0
+        self.extras: set[str] = set()
+        self.discount: float | None = None
+        self.comment: str | None = None
+
+    def for_film(self, film: str) -> "TicketBuilder":
+        self.film = film
+        return self
+
+    def seat(self, seat: str) -> "TicketBuilder":
+        self.seat = seat
+        return self
+
+    def price(self, p: float) -> "TicketBuilder":
+        self.price = p
+        return self
+
+    def with_popcorn(self) -> "TicketBuilder":
+        self.extras.add("popcorn")
+        return self
+
+    def with_drink(self) -> "TicketBuilder":
+        self.extras.add("drink")
+        return self
+
+    def with_discount(self, d: float) -> "TicketBuilder":
+        self.discount = d
+        return self
+
+    def with_comment(self, c: str) -> "TicketBuilder":
+        self.comment = c
+        return self
+
+    def build(self) -> Ticket:
+        if not self.film or not self.seat:
+            raise ValueError("film и seat обязательны")
+        return Ticket(self)
 
 
-class PartnerCustomer(CustomerType):
-    def apply_discount(self, amount):
-        return amount * 0.9
+# =====================================================================
+# 2. SINGLETON — потокобезопасная сессия пользователя
+# =====================================================================
+
+class UserSession:
+    _instance: "UserSession | None" = None
+    _lock = threading.Lock()
+
+    def __new__(cls, user: str = "guest") -> "UserSession":
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    obj = super().__new__(cls)
+                    obj.user = user
+                    cls._instance = obj
+        return cls._instance
+
+    def __init__(self, user: str = "guest") -> None:
+        # идемпотентно
+        pass
 
 
-CUSTOMER_TYPES = {
-    "regular": RegularCustomer,
-    "vip": VipCustomer,
-    "partner": PartnerCustomer,
-}
+# =====================================================================
+# 3. ABSTRACT FACTORY — семейства «билет + уведомление»
+# =====================================================================
+
+class Notifier(ABC):
+    @abstractmethod
+    def notify(self, msg: str) -> None: ...
 
 
-# ======================================================================
-# ВВЕДЕНИЕ ОБЪЕКТА NULL (Introduce Null Object): вместо многократных
-# проверок customer is not None / card is not None.
-# ======================================================================
-class NullCustomer:
-    country = None
-    card = None
-    promo_code = None
-    type = "regular"
-
-    def get_type(self):
-        return RegularCustomer()
-
-    def is_null(self):
-        return True
+class EmailNotifier(Notifier):
+    def notify(self, msg: str) -> None:
+        print(f"EMAIL: {msg}")
 
 
-class NullCard:
-    level = None
-
-    def is_null(self):
-        return True
+class SmsNotifier(Notifier):
+    def notify(self, msg: str) -> None:
+        print(f"SMS: {msg}")
 
 
-# ======================================================================
-# КЛАСС PaymentCalculator после рефакторинга
-# ======================================================================
-class PaymentCalculator:
+class TicketFactory(ABC):
+    @abstractmethod
+    def create_ticket(self, film: str, seat: str) -> Ticket: ...
 
-    def calculate(self, customer, order):
-        # ДЕКОМПОЗИЦИЯ УСЛОВНОГО ОПЕРАТОРА (Decompose Conditional):
-        # каждый шаг вынесен в отдельный метод с осмысленным именем.
-        if customer is None:
-            customer = NullCustomer()
-        if customer.card is None:
-            customer.card = NullCard()
+    @abstractmethod
+    def create_notifier(self) -> Notifier: ...
 
-        base = self._apply_card_discount(customer, order.total)
-        base = self._apply_customer_type_discount(customer, base)
-        total = base + self._calculate_shipping(order.total)
-        return total - self._find_promo_discount(customer, order)
 
-    # ------------------------------------------------------------------
-    # ДЕКОМПОЗИЦИЯ УСЛОВНОГО ОПЕРАТОРА: условие и ветки вынесены
-    # в отдельные методы.
-    # ------------------------------------------------------------------
-    def _apply_card_discount(self, customer, total):
-        # ЗАМЕНА ВЛОЖЕННЫХ УСЛОВНЫХ ОПЕРАТОРОВ ГРАНИЧНЫМ ОПЕРАТОРОМ
-        # (Replace Nested Conditional with Guard Clauses): вместо
-        # "стрелки" — ранние возвраты для особых случаев.
-        if customer.card.is_null():
-            return total
+class StandardTicketFactory(TicketFactory):
+    def create_ticket(self, film: str, seat: str) -> Ticket:
+        return (TicketBuilder()
+                .for_film(film).seat(seat)
+                .price(300.0)
+                .build())
 
-        if customer.country is None:
-            return total
+    def create_notifier(self) -> Notifier:
+        return EmailNotifier()
 
-        if customer.country == "RU":
-            return self._ru_card_discount(customer, total)
 
-        if customer.country == "US":
-            return self._us_card_discount(total)
+class VipTicketFactory(TicketFactory):
+    def create_ticket(self, film: str, seat: str) -> Ticket:
+        return (TicketBuilder()
+                .for_film(film).seat(seat)
+                .price(1500.0)
+                .with_popcorn().with_drink()
+                .build())
 
-        return total
+    def create_notifier(self) -> Notifier:
+        return SmsNotifier()
 
-    # ДЕКОМПОЗИЦИЯ УСЛОВНОГО ОПЕРАТОРА + КОНСОЛИДАЦИЯ УСЛОВНОГО
-    # ВЫРАЖЕНИЯ (Consolidate Conditional Expression): несколько
-    # проверок объединены в одно условие.
-    def _ru_card_discount(self, customer, total):
-        # ВВЕДЕНИЕ ПОЯСНЯЮЩЕЙ ПЕРЕМЕННОЙ: сложное условие разбито.
-        is_gold = customer.card.level == "gold"
-        if total > 1000 and is_gold:
-            return total * 0.8
-        if total > 1000:
-            return total * 0.9
-        return total * 0.95
 
-    def _us_card_discount(self, total):
-        # КОНСОЛИДАЦИЯ УСЛОВНОГО ВЫРАЖЕНИЯ: два условия > 1000
-        # дают одинаковый результат — объединены.
-        if total > 1000:
-            return total * 0.85
-        return total * 0.95
+# =====================================================================
+# 4. FACTORY METHOD — фабрика страниц фильма
+# =====================================================================
 
-    # ------------------------------------------------------------------
-    # КОНСОЛИДАЦИЯ ДУБЛИРУЮЩИХСЯ УСЛОВНЫХ ФРАГМЕНТОВ (Consolidate
-    # Duplicate Conditional Fragments): вместо дублирования кода
-    # доставки во всех ветках — один общий вызов.
-    # ------------------------------------------------------------------
-    def _calculate_shipping(self, total):
-        return 20 if total > 500 else 10
+class MoviePage:
+    def __init__(self, title: str, poster: str,
+                 desc: str, trailer: str, subs: str) -> None:
+        self.title = title
+        self.poster = poster
+        self.desc = desc
+        self.trailer = trailer
+        self.subs = subs
 
-    # ------------------------------------------------------------------
-    # ЗАМЕНА УСЛОВНОГО ОПЕРАТОРА ПОЛИМОРФИЗМОМ: вместо if/elif по
-    # customer.type — вызов полиморфного метода.
-    # ------------------------------------------------------------------
-    def _apply_customer_type_discount(self, customer, amount):
-        customer_type = CUSTOMER_TYPES.get(customer.type)
-        if customer_type is None:
-            raise ValueError("Unknown customer type")
-        return customer_type().apply_discount(amount)
+    def __str__(self) -> str:
+        return f"MoviePage({self.title}, poster={self.poster})"
 
-    # ------------------------------------------------------------------
-    # УДАЛЕНИЕ УПРАВЛЯЮЩЕГО ФЛАГА (Remove Control Flag): вместо
-    # переменной found — ранний return из цикла.
-    # ------------------------------------------------------------------
-    def _find_promo_discount(self, customer, order):
-        if customer.promo_code is None:
-            return 0.0
-        for promo in order.promos:
-            if promo.code == customer.promo_code:
-                return promo.value
-        return 0.0
+
+class MoviePageFactory(ABC):
+    @abstractmethod
+    def create(self, title: str) -> MoviePage: ...
+
+
+class LocalMoviePageFactory(MoviePageFactory):
+    def create(self, title: str) -> MoviePage:
+        return MoviePage(
+            title,
+            f"local/{title}.jpg",
+            f"Описание {title}",
+            f"local/{title}.mp4",
+            f"local/{title}.srt",
+        )
+
+
+class CloudMoviePageFactory(MoviePageFactory):
+    def create(self, title: str) -> MoviePage:
+        return MoviePage(
+            title,
+            f"https://cdn/{title}.jpg",
+            f"Cloud-описание {title}",
+            f"https://cdn/{title}.mp4",
+            f"https://cdn/{title}.srt",
+        )
+
+
+# =====================================================================
+# 5. LAZY INITIALIZATION (Singleton) — дорогой ресурс
+# =====================================================================
+
+class VideoDecoder:
+    _instance: "VideoDecoder | None" = None
+    _lock = threading.Lock()
+
+    def __new__(cls) -> "VideoDecoder":
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    print("VideoDecoder: дорогая инициализация (один раз)")
+                    cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def decode(self, f: str) -> None:
+        print(f"decode {f}")
+
+
+# =====================================================================
+# ДЕМОНСТРАЦИЯ
+# =====================================================================
+
+def main() -> None:
+    print("=== ЛР №6: Порождающие паттерны ===\n")
+
+    print("--- Builder ---")
+    ticket = (TicketBuilder()
+              .for_film("Dune").seat("A1")
+              .price(300.0).with_drink()
+              .build())
+    print(ticket)
+
+    print("\n--- Singleton ---")
+    s1 = UserSession("alice")
+    s2 = UserSession("bob")
+    print("same instance:", s1 is s2, "| user:", s1.user)
+
+    print("\n--- Abstract Factory ---")
+    for factory in (StandardTicketFactory(), VipTicketFactory()):
+        t = factory.create_ticket("Dune", "B5")
+        n = factory.create_notifier()
+        n.notify(f"Билет готов: {t}")
+
+    print("\n--- Factory Method ---")
+    for f in (LocalMoviePageFactory(), CloudMoviePageFactory()):
+        page = f.create("Dune")
+        print(page)
+
+    print("\n--- Prototype ---")
+    copy_ticket = ticket.clone()
+    copy_ticket.seat = "A2"
+    print("original:", ticket)
+    print("clone   :", copy_ticket)
+    print("independent:", ticket is not copy_ticket,
+          "| extras independent:", ticket.extras is not copy_ticket.extras)
+
+    print("\n--- Lazy Initialization (Singleton) ---")
+    d1 = VideoDecoder()
+    d2 = VideoDecoder()
+    print("same decoder:", d1 is d2)
+    d1.decode("trailer.mp4")
+    d2.decode("episode1.mp4")
+
+
+if __name__ == "__main__":
+    main()
