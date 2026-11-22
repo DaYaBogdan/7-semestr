@@ -167,8 +167,8 @@ def hlam():
 from util import Queue
 def breadthFirstSearch(problem):
     start = problem.getStartState()
-    if problem.isGoalState(start):
-        return []
+    
+    if problem.isGoalState(start): return []
 
     OPEN = Queue()
     CLOSED = {start}
@@ -188,6 +188,7 @@ def breadthFirstSearch(problem):
         if problem.isGoalState(node): return Path(problem, node, parent)
 
         for child, child_action, _ in problem.getSuccessors(node):
+            
             if child in CLOSED: continue
             
             CLOSED.add(child)
@@ -208,9 +209,10 @@ def Path(problem, node, parent):
 
     return how_to_get_home[::-1]
 
+from util import PriorityQueue
 def uniformCostSearch(problem):
     start = problem.getStartState()
-    OPEN = util.PriorityQueue()
+    OPEN = PriorityQueue()
     best_cost = {start: 0}
     CLOSED = set()
 
@@ -219,7 +221,7 @@ def uniformCostSearch(problem):
     while not OPEN.isEmpty():
         state, path, cost = OPEN.pop()
 
-        if cost > best_cost.get(state, float('inf')): continue
+        # if cost > best_cost.get(state, float('inf')): continue
 
         if problem.isGoalState(state): return path
 
@@ -228,9 +230,9 @@ def uniformCostSearch(problem):
 
         for succ, action, step_cost in problem.getSuccessors(state):
             new_cost = cost + step_cost
-            if succ not in CLOSED and new_cost < best_cost.get(succ, float('inf')):
-                best_cost[succ] = new_cost
-                OPEN.push((succ, path + [action], new_cost), new_cost)
+            # if succ not in CLOSED and new_cost < best_cost.get(succ, float('inf')):
+            best_cost[succ] = new_cost
+            OPEN.push((succ, path + [action], new_cost), new_cost)
 
     return None
 

@@ -326,8 +326,9 @@ class CornersProblem(search.SearchProblem):
 
             dx, dy = Actions.directionToVector(action)
             nextx, nexty = int(x + dx), int(y + dy)
-            
-            if self.walls[nextx][nexty]: continue
+            hitsWall = self.walls[nextx][nexty]
+
+            if hitsWall: continue
             
             next_position = (nextx, nexty)
             next_visited = visited
@@ -469,8 +470,9 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     foodList = foodGrid.asList()
-    if not foodList:
-        return 0
+    
+    if not foodList: return 0
+
     return max(abs(position[0]-f[0]) + abs(position[1]-f[1]) for f in foodList)
 
 class ClosestDotSearchAgent(SearchAgent):
