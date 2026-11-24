@@ -225,10 +225,43 @@ class MinimaxAgent(MultiAgentSearchAgent):
         gameState.isLose ():
         Возвращает True если состояние игры является проигрышным.
         """
-        
-        "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-       
-        util.raiseNotDefined()
+        _, action = self.minimax(gameState, 0, 0)
+        return action
+
+    def minimax(self, gameState, agentIndex, depth):
+        # Терминальные условия
+        if gameState.isWin() or gameState.isLose() or depth == self.depth:
+            return self.evaluationFunction(gameState), None
+
+        numAgents = gameState.getNumAgents()
+        legalActions = gameState.getLegalActions(agentIndex)
+
+        if agentIndex == 0:  # Пакман — максимизатор
+            bestValue = float('-inf')
+            bestAction = None
+            for action in legalActions:
+                successor = gameState.generateSuccessor(agentIndex, action)
+                # следующий агент — 1 (первый призрак), глубина та же
+                value, _ = self.minimax(successor, 1, depth)
+                if value > bestValue:
+                    bestValue = value
+                    bestAction = action
+            return bestValue, bestAction
+        else:  # Призрак — минимизатор
+            bestValue = float('inf')
+            bestAction = None
+            for action in legalActions:
+                successor = gameState.generateSuccessor(agentIndex, action)
+                nextAgent = agentIndex + 1
+                nextDepth = depth
+                if nextAgent == numAgents:   # призраки закончились → снова Пакман
+                    nextAgent = 0
+                    nextDepth = depth + 1     # увеличиваем глубину только здесь!
+                value, _ = self.minimax(successor, nextAgent, nextDepth)
+                if value < bestValue:
+                    bestValue = value
+                    bestAction = action
+            return bestValue, bestAction
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -242,7 +275,47 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
        
-        util.raiseNotDefined()
+        _, action = self.alphaBeta(gameState, 0, 0, float('-inf'), float('inf'))
+        return action
+    
+    def alphaBeta(self, gameState, agentIndex, depth, alpha, beta):
+        if gameState.isWin() or gameState.isLose() or depth == self.depth:
+            return self.evaluationFunction(gameState), None
+
+        numAgents = gameState.getNumAgents()
+        legalActions = gameState.getLegalActions(agentIndex)
+
+        if agentIndex == 0:  # max
+            bestValue = float('-inf')
+            bestAction = None
+            for action in legalActions:
+                successor = gameState.generateSuccessor(agentIndex, action)
+                value, _ = self.alphaBeta(successor, 1, depth, alpha, beta)
+                if value > bestValue:
+                    bestValue = value
+                    bestAction = action
+                alpha = max(alpha, bestValue)
+                if alpha >= beta:
+                    break   # ОТСЕЧЕНИЕ
+            return bestValue, bestAction
+        else:  # min
+            bestValue = float('inf')
+            bestAction = None
+            for action in legalActions:
+                successor = gameState.generateSuccessor(agentIndex, action)
+                nextAgent = agentIndex + 1
+                nextDepth = depth
+                if nextAgent == numAgents:
+                    nextAgent = 0
+                    nextDepth = depth + 1
+                value, _ = self.alphaBeta(successor, nextAgent, nextDepth, alpha, beta)
+                if value < bestValue:
+                    bestValue = value
+                    bestAction = action
+                beta = min(beta, bestValue)
+                if alpha >= beta:
+                    break   # ОТСЕЧЕНИЕ
+            return bestValue, bestAction
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -260,7 +333,39 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         
         "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
       
-        util.raiseNotDefined()
+        _, action = self.expectimax(gameState, 0, 0)
+        return action
+    
+    def expectimax(self, gameState, agentIndex, depth):
+        if gameState.isWin() or gameState.isLose() or depth == self.depth:
+            return self.evaluationFunction(gameState), None
+
+        numAgents = gameState.getNumAgents()
+        legalActions = gameState.getLegalActions(agentIndex)
+
+        if agentIndex == 0:  # Пакман — max
+            bestValue = float('-inf')
+            bestAction = None
+            for action in legalActions:
+                successor = gameState.generateSuccessor(agentIndex, action)
+                value, _ = self.expectimax(successor, 1, depth)
+                if value > bestValue:
+                    bestValue = value
+                    bestAction = action
+            return bestValue, bestAction
+        else:  # Призрак — ожидание
+            total = 0.0
+            for action in legalActions:
+                successor = gameState.generateSuccessor(agentIndex, action)
+                nextAgent = agentIndex + 1
+                nextDepth = depth
+                if nextAgent == numAgents:
+                    nextAgent = 0
+                    nextDepth = depth + 1
+                value, _ = self.expectimax(successor, nextAgent, nextDepth)
+                total += value
+            # среднее по всем действиям
+            return total / len(legalActions), None
 
 def betterEvaluationFunction(currentGameState):
     """
@@ -271,7 +376,41 @@ def betterEvaluationFunction(currentGameState):
     
     "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
    
-    util.raiseNotDefined()
+    score = currentGameState.getScore()
+    pacmanPos = currentGameState.getPacmanPosition()
+    food = currentGameState.getFood()
+    foodList = food.asList()
+    ghostStates = currentGameState.getGhostStates()
+    capsules = currentGameState.getCapsules()
+
+    # 1. Текущий счёт — базовая награда
+    value = score
+
+    # 2. Расстояние до ближайшей еды (манхэттен) — штраф
+    if foodList:
+        minFoodDist = min(abs(pacmanPos[0]-f[0]) + abs(pacmanPos[1]-f[1])
+                          for f in foodList)
+        value -= 2.0 * minFoodDist     # коэффициент подбирается
+
+    # 3. Призраки: если scared — бонус за близость, иначе штраф за близость
+    for ghost in ghostStates:
+        ghostPos = ghost.getPosition()
+        dist = abs(pacmanPos[0]-ghostPos[0]) + abs(pacmanPos[1]-ghostPos[1])
+        if ghost.scaredTimer > 0:
+            value += 5.0 / (dist + 1)   # ближе страшный призрак — выгоднее
+        else:
+            if dist < 2:
+                value -= 100.0           # очень близко — смертельно
+            else:
+                value -= 1.0 / dist      # чем ближе, тем хуже
+
+    # 4. Капсулы (энергетические гранулы) — бонус за близость
+    if capsules:
+        minCapDist = min(abs(pacmanPos[0]-c[0]) + abs(pacmanPos[1]-c[1])
+                         for c in capsules)
+        value += 3.0 / (minCapDist + 1)
+
+    return value
 
 # Abbreviation
 better = betterEvaluationFunction
